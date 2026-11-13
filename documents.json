@@ -1,11 +1,48 @@
 [
   {
-    "name": "example",
-    "title": "TODO(author): the first document this industry must produce",
-    "for_each": "select gen_random_uuid() as id, 'Example' as name",
+    "name": "tuning-brief",
+    "title": "Tuning evidence brief",
+    "for_each": "SELECT id,coalesce(label,signature) AS name FROM queries ORDER BY name",
     "file": "name",
     "sections": [
-      { "title": "Details", "sql": "select 'replace me' as item, $1::text as record_id" }
+      {
+        "title": "Query identity",
+        "sql": "SELECT q.signature,q.db_name,q.db_user,q.owner,h.name AS host FROM queries q JOIN hosts h ON h.id=q.host_id WHERE q.id=$1",
+        "layout": "record"
+      },
+      {
+        "title": "Observed windows",
+        "sql": "SELECT window_start,window_end,executions,observed_seconds,mean_ms,missing_points FROM query_windows WHERE query_id=$1 ORDER BY window_start"
+      },
+      {
+        "title": "Tuning actions",
+        "sql": "SELECT title,owner,due,status,closure_evidence FROM actions WHERE query_id=$1 ORDER BY due"
+      },
+      {
+        "title": "Investigation notes",
+        "sql": "SELECT body,actor,created_at FROM notes WHERE query_id=$1 ORDER BY created_at"
+      }
+    ]
+  },
+  {
+    "name": "source-review",
+    "title": "Source access and retention review",
+    "for_each": "SELECT id,name FROM sources ORDER BY name",
+    "file": "name",
+    "sections": [
+      {
+        "title": "Accountability",
+        "sql": "SELECT name,owner,purpose,access_review,retention_review FROM sources WHERE id=$1",
+        "layout": "record"
+      },
+      {
+        "title": "Imported evidence",
+        "sql": "SELECT source_ref,actor,digest,created_at FROM imports WHERE source_id=$1 ORDER BY created_at"
+      },
+      {
+        "title": "Recorded review history",
+        "sql": "SELECT actor,details,created_at FROM events WHERE record_id=$1 ORDER BY created_at"
+      }
     ]
   }
 ]

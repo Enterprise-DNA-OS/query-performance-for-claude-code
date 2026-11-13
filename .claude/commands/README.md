@@ -1,5 +1,3 @@
-# Slash commands
+# Query performance commands
 
-One file per recurring job. Each command tells Claude Code exactly which CLI command to run and how to present the result, so the operator never re-explains the job.
-
-Add a command every time the same ask comes twice. Frontmatter needs a `description:` line. The body is the brief.
+These recipes are the one workflow library for Claude Code, Codex, OpenCode and Cursor. Start with slow-queries, regression-review, workload-review, coverage-review and weekly-review. Run npm run performance -- help for the CLI contract. All demo identities are fictional.

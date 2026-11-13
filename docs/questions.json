@@ -1,0 +1,42 @@
+[
+  {
+    "question": "Which saved query is slowest in its latest window?",
+    "command": "npm run performance -- slow-queries"
+  },
+  {
+    "question": "Which query became slower between equal-length windows?",
+    "command": "npm run performance -- regression-review"
+  },
+  {
+    "question": "Which query improved after the previous review?",
+    "command": "npm run performance -- regression-review"
+  },
+  {
+    "question": "Which host accounts for the most observed execution time?",
+    "command": "npm run performance -- workload-review"
+  },
+  {
+    "question": "Which results are too incomplete to quote a mean latency?",
+    "command": "npm run performance -- coverage-review"
+  },
+  {
+    "question": "Which queries have no tuning owner?",
+    "command": "npm run performance -- compliance"
+  },
+  {
+    "question": "Which tuning tasks are overdue?",
+    "command": "npm run performance -- attention"
+  },
+  {
+    "question": "What did we observe for one query across both windows?",
+    "command": "npm run performance -- query --ref=\"Order lookup\""
+  },
+  {
+    "question": "Which source access and retention reviews are overdue?",
+    "command": "npm run performance -- compliance"
+  },
+  {
+    "question": "Who imported evidence and recorded follow-up?",
+    "command": "npm run performance -- history"
+  }
+]

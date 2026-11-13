@@ -1,0 +1,67 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {spawnSync} from 'node:child_process';
+import {getDb,REPO_ROOT} from './lib/db.mjs';
+import {migrate} from './migrate.mjs';
+import {seed} from './seed.mjs';
+import {run,parse,contracts} from './performance.mjs';
+import {normalize} from './lib/import-datadog.mjs';
+const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'query-performance-test-'));
+process.env.DATA_DIR=path.join(tmp,'db');process.env.OUTPUT_DIR=tmp;process.env.DATABASE_URL=process.env.TEST_DATABASE_URL||'';
+let db;const seen=new Set();
+const call=async(v,...args)=>{seen.add(v);return run(db,parse([v,...args]));};
+const save=(name,obj)=>{const f=path.join(tmp,name+'.json');fs.writeFileSync(f,JSON.stringify(obj));return f;};
+try{
+ db=await getDb();
+ if(process.env.TEST_DATABASE_URL){const r=await db.query("SELECT tablename FROM pg_tables WHERE schemaname='public'");assert.equal(r.length,0,'TEST_DATABASE_URL must be disposable and empty');}
+ await migrate(db);assert.equal((await migrate(db)).ran.length,0);await seed(db);await seed(db);
+ assert.equal((await call('queries')).length,3);assert.equal((await call('windows')).length,6);
+ for(const v of ['help','sources','hosts','slow-queries','regression-review','workload-review','coverage-review','actions','attention','compliance','imports','history'])await call(v);
+ const slow=await call('slow-queries');const order=slow.find(r=>r.query_name==='Order lookup');const missing=slow.find(r=>r.query_name==='Billing summary');
+ assert.equal(Number(order.mean_ms),750);assert.equal(missing.mean_ms,null);assert.equal(missing.missing_points,1);
+ const reg=(await call('regression-review')).find(r=>r.query_name==='Order lookup');assert.equal(Number(reg.previous_ms),250);assert.equal(Number(reg.change_pct),200);
+ assert.ok((await call('attention')).some(r=>r.kind==='overdue-action'));
+ assert.equal((await call('query','--ref=order lookup')).length,2);assert.equal((await call('query','--ref='+order.query_id.slice(0,10))).length,2);
+ await assert.rejects(()=>db.query('UPDATE observations SET executions=0'),/append-only/);
+ const [s]=await call('add-source','--name=Test source','--owner=Test operator','--purpose=Test fixture','--access-review=2027-01-01','--retention-review=2027-01-01','--actor=Test operator');
+ const base=['datadog','--source='+s.id,'--file='+path.join(REPO_ROOT,'examples/datadog-before.json'),'--expected-count=3','--source-ref=Test native response','--actor=Test operator'];
+ assert.equal((await call('import',...base,'--dry-run'))[0].added,3);assert.equal((await call('windows')).length,6);
+ assert.equal((await call('import',...base))[0].added,3);assert.equal((await call('import',...base))[0].skipped,3);
+ await assert.rejects(()=>call('import',...base.map(s=>s==='--expected-count=3'?'--expected-count=4':s)),/Expected 4/);
+ const fixture=JSON.parse(fs.readFileSync(path.join(REPO_ROOT,'examples/datadog-before.json')));
+ const changed=structuredClone(fixture);changed.series[1].pointlist[0][1]+=1;
+ await assert.rejects(()=>call('import',...base.map(s=>s.startsWith('--file=')?'--file='+save('conflict',changed):s)),/Conflicting/);
+ assert.equal((await call('windows')).length,9);assert.equal((await call('imports')).length,3,'failed import rolls back provenance');
+ const malformed=structuredClone(fixture);malformed.series.at(-1).pointlist.push(malformed.series.at(-1).pointlist[0]);assert.throws(()=>normalize(malformed),/Duplicate/);
+ const wrong=structuredClone(fixture);wrong.series[0].expression=wrong.series[0].expression.replace('as_count','as_rate');assert.throws(()=>normalize(wrong),/documented/);
+ const unpaired=structuredClone(fixture);unpaired.series.pop();assert.throws(()=>normalize(unpaired),/paired/);
+ const negative=structuredClone(fixture);negative.series[0].pointlist[0][1]=-1;assert.throws(()=>normalize(negative),/nonnegative/);
+ const incomplete=structuredClone(fixture);incomplete.series[0].pointlist.pop();assert.equal(normalize(incomplete)[0].missing_points,1);
+ const zero=structuredClone(fixture);zero.series[0].pointlist[0][1]=0;assert.throws(()=>normalize(zero),/without executions/);
+ const badUnit=structuredClone(fixture);badUnit.series[1].unit[0].name='millisecond';assert.throws(()=>normalize(badUnit),/unit/);
+ const odd=structuredClone(fixture);odd.from_date+=1;assert.throws(()=>normalize(odd),/align/);
+ const duplicate=structuredClone(fixture);duplicate.series.push(duplicate.series[0]);assert.throws(()=>normalize(duplicate),/Duplicate series/);
+ const sameName=(await call('queries')).find(q=>q.source==='Test source'&&q.signature==='q-orders');
+ await call('assign-query','--ref='+sameName.id,'--owner=Test owner','--label=Order lookup','--actor=Test operator');
+ await assert.rejects(()=>call('query','--ref=Order lookup'),/Ambiguous/);
+ await call('review-source','--ref=test source','--access-review=2027-02-01','--retention-review=2027-02-02','--evidence=Test review completed','--actor=Test operator');
+ await assert.rejects(()=>call('review-source','--ref='+s.id,'--access-review=2026-02-30','--retention-review=2027-02-02','--evidence=Test','--actor=Test'),/real/);
+ const [a]=await call('add-action','--ref='+sameName.id,'--title=Check <script>alert(1)</script>','--owner=Test owner','--due=2026-10-01','--actor=Test operator');
+ await call('log','--ref='+sameName.id,'--text=Test evidence <b>private</b>','--actor=Test operator');
+ await assert.rejects(()=>call('close-action','--ref='+a.id,'--actor=Test'),/evidence/);
+ await call('close-action','--ref='+a.id,'--evidence=Test run reviewed','--actor=Test operator');
+ await assert.rejects(()=>call('close-action','--ref='+a.id,'--evidence=Again','--actor=Test'),/already closed/);
+ for(const v of ['weekly-review','draft-tuning']){const out=await call(v,...(v==='draft-tuning'?['--ref='+sameName.id]:[]));assert.match(fs.readFileSync(out[0].file,'utf8'),/Draft/);}
+ const backup=path.join(tmp,'backup.json');await call('export','--file='+backup);assert.equal(Object.keys(JSON.parse(fs.readFileSync(backup)).records).length,8);await assert.rejects(()=>call('export','--file='+backup),/EEXIST/);
+ assert.throws(()=>parse(['queries','--typo']),/Unknown/);assert.throws(()=>parse(['help','--json=false']),/no value/);assert.throws(()=>parse(['query','garbage']),/Unexpected/);
+ assert.deepEqual(Object.keys(contracts).filter(k=>!seen.has(k)),[]);
+ await db.close();db=null;
+ for(const v of ['view','docs']){const p=spawnSync(process.execPath,['scripts/'+v+'.mjs'],{cwd:REPO_ROOT,env:process.env,encoding:'utf8'});assert.equal(p.status,0,p.stderr);}
+ const files=fs.readdirSync(path.join(tmp,'docs-out/tuning-brief'));const html=files.map(f=>fs.readFileSync(path.join(tmp,'docs-out/tuning-brief',f),'utf8')).join('');assert.match(html,/&lt;script&gt;/);assert.ok(!html.includes('<script>'));
+ const human=spawnSync(process.execPath,['scripts/performance.mjs','slow-queries'],{cwd:REPO_ROOT,env:process.env,encoding:'utf8'});assert.equal(human.status,0,human.stderr);assert.match(human.stdout,/mean_ms/);
+ const machine=spawnSync(process.execPath,['scripts/performance.mjs','sources','--json'],{cwd:REPO_ROOT,env:process.env,encoding:'utf8'});assert.equal(machine.status,0,machine.stderr);assert.equal(JSON.parse(machine.stdout).length,2);
+ const cli=spawnSync(process.execPath,['scripts/performance.mjs','query','--ref=Order lookup'],{cwd:REPO_ROOT,env:process.env,encoding:'utf8'});assert.equal(cli.status,1);assert.match(cli.stderr,/Ambiguous/);
+ console.log(`PASS: ${seen.size} CLI verbs; weighted latency, missing data, imports, isolation, rollback, ambiguity, evidence, reports and export`);
+}finally{await db?.close();fs.rmSync(tmp,{recursive:true,force:true});}

@@ -1,115 +1,98 @@
-<h1 align="center">Query Performance for Claude Code</h1>
+# Query Performance for Claude Code
 
-<p align="center">
-  <strong>The open-source query performance review system that is just a database and Claude Code.</strong>
-</p>
+Own your query performance review, tuning decisions and evidence. A focused alternative for the review work performed with saved Datadog Database Monitoring metrics.
 
-<p align="center">
-  Created by <a href="https://www.enterprisedna.co"><strong>Enterprise DNA</strong></a>. Free and open source. Works with Claude Code, Codex, OpenCode or Cursor.
-</p>
+Built by Enterprise DNA. MIT licence. Works with Claude Code, Codex, OpenCode or Cursor.
 
-<!-- three-doors -->
-<table align="center">
-  <tr>
-    <td align="center"><strong>Do it yourself</strong><br/>Clone it, run it, own it. Free, MIT.<br/><a href="#quick-start">Quick start</a></td>
-    <td align="center"><strong>We customise it</strong><br/>Your fields, your rules, your Datadog Database Monitoring data brought across.<br/><a href="https://enterprisedna.co/omni/book/?utm_source=github&utm_medium=readme&utm_campaign=datadog-database-monitoring">Book a call</a></td>
-    <td align="center"><strong>We run it for you</strong><br/>Installed, connected and operated inside Omni. Setup fee, then a retainer.<br/><a href="https://enterprisedna.co/omni/instead-of/datadog-database-monitoring?utm_source=github&utm_medium=readme&utm_campaign=datadog-database-monitoring">How it works</a></td>
-  </tr>
-</table>
-
-<p align="center">
-  <a href="#what-is-this">What is this</a> &bull;
-  <a href="#why-no-front-end">Why no front end</a> &bull;
-  <a href="#quick-start">Quick start</a> &bull;
-  <a href="#the-commands">Commands</a> &bull;
-  <a href="#instead-of-datadog-database-monitoring">Instead of Datadog Database Monitoring</a> &bull;
-  <a href="#want-it-installed-and-run-for-you">Installed for you</a> &bull;
-  <a href="#license">License</a>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Node-20+-339933?style=flat-square" alt="Node 20+" />
-  <img src="https://img.shields.io/badge/PostgreSQL-any-336791?style=flat-square" alt="PostgreSQL" />
-  <img src="https://img.shields.io/badge/PGlite-embedded-3ecf8e?style=flat-square" alt="PGlite" />
-  <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" alt="MIT License" />
-</p>
-
----
-
-## What is this
-
-Query Performance for Claude Code does the job you pay Datadog Database Monitoring for, as a Postgres database and a set of agent commands. There is no web front end. You open the folder in [Claude Code](https://claude.com/claude-code) (or Codex, OpenCode, Cursor: see `AGENTS.md`) and ask for what you want in plain language. It runs the right query, and it can answer questions the Datadog Database Monitoring dashboard cannot.
-
-<!-- TODO(author): the annual bill. One sentence: what a 10 to 50 person business typically pays Datadog Database Monitoring per year, all in, with a source. -->
-
-Want the same thing with a web front end, or built on a different stack? That is a customisation, and it is exactly what Enterprise DNA does: [book a call](https://enterprisedna.co/omni/book/?utm_source=github&utm_medium=readme&utm_campaign=datadog-database-monitoring).
-
-<!-- TODO(author): two or three sentences on what this specific product covers and who it is for. -->
-
-## Why no front end
-
-- The front end was only ever there because the database was hard to talk to. That is no longer true.
-- Your data sits in plain Postgres tables you own. Any tool can read them. No export, no lock-in.
-- No seats, no tiers, no add-ons. Read [docs/why-no-front-end.md](docs/why-no-front-end.md) for the honest trade-offs too.
+| Do it yourself | We customise it | We run it for you |
+|---|---|---|
+| Free. Install the database and commands below. | Your estate, rules, imports and reports. | Installed, connected and operated through Omni by Enterprise DNA. Setup fee, then a retainer. |
+| [Quick start](#quick-start) | [Get your version built](https://enterprisedna.co/omni/book/?offer=replace-software&utm_medium=github&utm_campaign=datadog-database-monitoring) | [Book a call](https://enterprisedna.co/omni/book/?offer=replace-software&utm_medium=github&utm_campaign=datadog-database-monitoring) |
 
 ## Quick start
 
-Sixty seconds, no database install (an embedded Postgres runs inside Node):
+Node 20 or newer. The demo needs no Datadog account or external database.
 
 ```bash
 git clone https://github.com/Enterprise-DNA-OS/query-performance-for-claude-code.git
 cd query-performance-for-claude-code
 npm install
 npm run demo
+npm run performance -- slow-queries
+npm run view
+npm run docs
 ```
 
-Then open the folder in Claude Code and type a slash command. <!-- TODO(author): name the first command to try. -->
+Use a fresh local folder for the fictional demo. PGlite persists to .data/db. Do not seed a business database. Set DATABASE_URL and run npm run migrate for your own PostgreSQL database. Use a separate DATA_DIR for real local records. Demo seeding resets the fictional query labels and owners, so use the normal CLI for your work.
 
-### Use it with your own Postgres or Supabase
+The fictional data has three query identities and six windows. Order lookup rises from a weighted 250 ms to 750 ms. Catalogue search falls from 1,000 ms to 500 ms. Billing has one missing paired bucket, so its mean is withheld. An overdue tuning task and overdue source reviews make the attention view useful immediately.
 
-Copy `.env.example` to `.env`, set `DATABASE_URL`, then `npm run migrate`. Same commands, shared data, no per-seat fee.
+## The working week
 
-## The commands
+1. `/slow-queries` ranks the latest saved query windows.
+2. `/regression-review` compares equal-length windows without averaging averages.
+3. `/workload-review` compares observed execution time within each host and window.
+4. `/coverage-review` shows missing samples and unassigned ownership.
+5. `/weekly-review` combines performance, changes and attention into a private draft.
 
-<!-- TODO(author): a table of the slash commands in .claude/commands and what each one does. -->
+The CLI has 25 verbs including help. There are 28 slash-command recipes. Run `npm run performance -- help`. Human-readable columns are the default; add --json for processing. Unique names match without case and UUID prefixes work. Ambiguous names list candidates and exit 1.
 
-| Command | What it does |
-|---|---|
-| `/...` | ... |
+## Bring saved Datadog data across
 
-## Instead of Datadog Database Monitoring
+Export a native Datadog v1 Query Timeseries response using the exact count and time expressions in [the switching guide](docs/replace-datadog-database-monitoring.md). Register the source, reconcile the distinct query count, then import in one command:
 
-<!-- TODO(author): how to bring data across from Datadog Database Monitoring; link docs/replace-datadog-database-monitoring.md -->
-
-## Architecture
-
-```
-query-performance-for-claude-code/
-  CLAUDE.md                 how the operator wants this run (routing table + house rules)
-  AGENTS.md                 the same, for Codex / OpenCode / Cursor / Gemini CLI
-  .claude/commands/         the slash commands
-  scripts/                  the CLI the commands drive
-  scripts/lib/db.mjs        one adapter: DATABASE_URL (pg) or embedded PGlite
-  supabase/migrations/      plain SQL schema
-  supabase/seed.sql         demo data
-  docs/                     the thesis and the migration guide
+```bash
+npm run performance -- import datadog --source="Your source" --file=imports/query-window.json --expected-count=3 --source-ref="Actual export window and filters" --actor="Actual operator" --dry-run
 ```
 
-## Built for coding agents
+Replace the count and placeholders with your actual evidence. Remove --dry-run after reconciliation. This importer supports PostgreSQL query execution count and nanosecond time metrics, grouped by host, database, user and query signature. It does not claim compatibility with arbitrary exports, other database engines, query samples or explain plans. Datadog recommends its newer v2 endpoint; this base deliberately supports the still-documented v1 response only.
 
-The database, CLI and command recipes work with Claude Code, Codex, OpenCode or Cursor. Ask your coding agent for a new command and have it implement and test the change against the same records.
+Imports validate every series before writing, preserve the native response, reject conflicting or overlapping windows and leave existing evidence intact. Repeating the same import skips existing observations. Source namespaces keep equal query signatures from separate organisations apart. The importer makes no network call and handles no credential.
 
-## Contributing
+## Ten questions to ask
 
-Issues and pull requests are welcome. Keep the shape: plain SQL, a small CLI, a slash command per recurring job, no front end.
+These are implemented questions, not claims that Datadog cannot answer the same questions.
 
-## Want it installed and run for you?
+1. Which saved query is slowest in its latest window? `slow-queries`
+2. Which query became slower between equal-length windows? `regression-review`
+3. Which query improved after the previous review? `regression-review`
+4. Which host accounts for the most observed execution time? `workload-review`
+5. Which results are too incomplete to quote a mean latency? `coverage-review`
+6. Which queries have no tuning owner? `compliance`
+7. Which tuning tasks are overdue? `attention`
+8. What did we observe for one query across both windows? `query --ref="Order lookup"`
+9. Which source access and retention reviews are overdue? `compliance`
+10. Who imported evidence and recorded follow-up? `history`
 
-Enterprise DNA installs Query Performance for Claude Code for your business, migrates your Datadog Database Monitoring data, connects it to the rest of your tools, and runs it for you as part of **Omni**, our managed Command Center. One setup fee, then a monthly retainer.
+## Your first hour: ten things to ask for
 
-- Book a call: [enterprisedna.co/omni/book](https://enterprisedna.co/omni/book/?offer=replace-software&utm_source=github&utm_medium=readme&utm_campaign=datadog-database-monitoring)
-- Read more: [enterprisedna.co/omni/instead-of/datadog-database-monitoring](https://enterprisedna.co/omni/instead-of/datadog-database-monitoring?utm_source=github&utm_medium=readme&utm_campaign=datadog-database-monitoring)
+1. Set our name, logo and colours in brand.json.
+2. Register our source, purpose and accountable owner.
+3. Agree access and retention review dates.
+4. Export a complete aligned window from the existing monitor.
+5. Reconcile the distinct query count before importing.
+6. Give each query a business label and owner.
+7. Review missing samples before quoting performance.
+8. Assign a tuning investigation with an actual due date.
+9. Record evidence and close the task after review.
+10. Render the weekly view and tuning briefs.
 
-## License
+`/customise` adds fields and rules through a tested migration. `/new-view` adds a read-only report. Nothing runs a query against a production system.
 
-MIT. Copyright (c) 2026 Enterprise DNA.
+## Records and reports
+
+Eight domain record types hold sources, hosts, query identities, imports, observations, actions, notes and events. Imported observations, source responses, notes and events are append-only. New evidence never rewrites the past. A typed actor records attribution; it is not authentication. The application connects as a trusted operator. RLS blocks public access but is not a complete multi-user access model.
+
+`npm run docs` renders a tuning evidence brief per query and a source access/retention review per source. `npm run view` renders views/week.html. brand.json controls the business name, logo and colours. Reports escape record content and stay private.
+
+`/compliance` checks access and retention review dates, query ownership, stale evidence and missing samples. [Rules and sources](docs/compliance.md) distinguish legal principles from local review policy. No automatic deletion or certification is provided.
+
+`npm run performance -- export --file=exports/backup-YYYY-MM-DD.json` writes all eight record types to a new file and refuses overwrites. Keep original exports and native database backups. JSON restore is not implemented.
+
+## Scope and validation
+
+This is a saved-evidence review system. Continuous collection, live alerts, query text analysis, explain plans, application traces and automatic optimisation need separate implementation. Keep existing monitoring until its operational requirements are covered. [Why no front end](docs/why-no-front-end.md).
+
+npm test exercises every CLI verb, migration and seed idempotency, weighted arithmetic, missing samples, namespace separation, conflict rollback, evidence immutability, ambiguous names, closure evidence, backups and escaped HTML. [Validation](docs/validation.md). [Selection and research](docs/research.md).
+
+MIT. Built and optionally operated through [Omni by Enterprise DNA](https://enterprisedna.co/omni/instead-of/datadog-database-monitoring?utm_source=github&utm_medium=readme&utm_campaign=datadog-database-monitoring).

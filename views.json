@@ -1,13 +1,26 @@
 [
   {
     "name": "week",
-    "title": "This week",
-    "subtitle": "Query Performance for Claude Code: what needs attention, rendered by npm run view",
+    "title": "Query performance review",
+    "subtitle": "Saved evidence, tuning owners and follow-up. Fictional demo when seeded.",
     "sections": [
       {
-        "title": "Needs attention",
-        "note": "TODO(author): point this at the industry's attention view (overdue, stuck, quiet).",
-        "sql": "select 'replace me' as item, 'TODO(author)' as why"
+        "title": "Latest observed performance",
+        "sql": "SELECT host,query_name,owner,mean_ms,observed_seconds,missing_points FROM latest_queries ORDER BY mean_ms DESC NULLS LAST",
+        "note": "Mean latency is withheld when any paired sample is missing. Each row uses its own latest window."
+      },
+      {
+        "title": "Changes between comparable windows",
+        "sql": "SELECT r.host,r.query_name,r.previous_ms,r.mean_ms,r.change_pct FROM regressions r JOIN latest_queries l ON l.query_id=r.query_id AND l.window_end=r.window_end ORDER BY change_pct DESC NULLS LAST",
+        "note": "Only equal-length windows produce a percentage. A change is evidence to investigate, not proof of cause."
+      },
+      {
+        "title": "Open tuning work",
+        "sql": "SELECT host,query_name,title,owner,due,overdue FROM action_queue WHERE status='open' ORDER BY due"
+      },
+      {
+        "title": "Record controls",
+        "sql": "SELECT rule,record,owner,finding FROM compliance_findings ORDER BY rule,record"
       }
     ]
   }

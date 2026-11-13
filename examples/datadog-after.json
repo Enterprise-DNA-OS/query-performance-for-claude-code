@@ -1,0 +1,182 @@
+{
+  "status": "ok",
+  "res_type": "time_series",
+  "from_date": 1794268800000,
+  "to_date": 1794276000000,
+  "series": [
+    {
+      "metric": "postgresql.queries.count",
+      "expression": "sum:postgresql.queries.count{*} by {host,db,user,query_signature}.rollup(sum,3600).as_count()",
+      "scope": "host:orders-prod,db:orders,user:app,query_signature:q-orders",
+      "tag_set": [
+        "host:orders-prod",
+        "db:orders",
+        "user:app",
+        "query_signature:q-orders"
+      ],
+      "interval": 3600000,
+      "aggr": "sum",
+      "pointlist": [
+        [
+          1794268800000,
+          100
+        ],
+        [
+          1794272400000,
+          300
+        ]
+      ],
+      "unit": [
+        {
+          "name": "query"
+        },
+        null
+      ]
+    },
+    {
+      "metric": "postgresql.queries.time",
+      "expression": "sum:postgresql.queries.time{*} by {host,db,user,query_signature}.rollup(sum,3600).as_count()",
+      "scope": "host:orders-prod,db:orders,user:app,query_signature:q-orders",
+      "tag_set": [
+        "host:orders-prod",
+        "db:orders",
+        "user:app",
+        "query_signature:q-orders"
+      ],
+      "interval": 3600000,
+      "aggr": "sum",
+      "pointlist": [
+        [
+          1794268800000,
+          30000000000.0
+        ],
+        [
+          1794272400000,
+          270000000000.0
+        ]
+      ],
+      "unit": [
+        {
+          "name": "nanosecond"
+        },
+        null
+      ]
+    },
+    {
+      "metric": "postgresql.queries.count",
+      "expression": "sum:postgresql.queries.count{*} by {host,db,user,query_signature}.rollup(sum,3600).as_count()",
+      "scope": "host:orders-prod,db:orders,user:app,query_signature:q-search",
+      "tag_set": [
+        "host:orders-prod",
+        "db:orders",
+        "user:app",
+        "query_signature:q-search"
+      ],
+      "interval": 3600000,
+      "aggr": "sum",
+      "pointlist": [
+        [
+          1794268800000,
+          20
+        ],
+        [
+          1794272400000,
+          20
+        ]
+      ],
+      "unit": [
+        {
+          "name": "query"
+        },
+        null
+      ]
+    },
+    {
+      "metric": "postgresql.queries.time",
+      "expression": "sum:postgresql.queries.time{*} by {host,db,user,query_signature}.rollup(sum,3600).as_count()",
+      "scope": "host:orders-prod,db:orders,user:app,query_signature:q-search",
+      "tag_set": [
+        "host:orders-prod",
+        "db:orders",
+        "user:app",
+        "query_signature:q-search"
+      ],
+      "interval": 3600000,
+      "aggr": "sum",
+      "pointlist": [
+        [
+          1794268800000,
+          10000000000.0
+        ],
+        [
+          1794272400000,
+          10000000000.0
+        ]
+      ],
+      "unit": [
+        {
+          "name": "nanosecond"
+        },
+        null
+      ]
+    },
+    {
+      "metric": "postgresql.queries.count",
+      "expression": "sum:postgresql.queries.count{*} by {host,db,user,query_signature}.rollup(sum,3600).as_count()",
+      "scope": "host:billing-prod,db:billing,user:app,query_signature:q-billing",
+      "tag_set": [
+        "host:billing-prod",
+        "db:billing",
+        "user:app",
+        "query_signature:q-billing"
+      ],
+      "interval": 3600000,
+      "aggr": "sum",
+      "pointlist": [
+        [
+          1794268800000,
+          50
+        ],
+        [
+          1794272400000,
+          null
+        ]
+      ],
+      "unit": [
+        {
+          "name": "query"
+        },
+        null
+      ]
+    },
+    {
+      "metric": "postgresql.queries.time",
+      "expression": "sum:postgresql.queries.time{*} by {host,db,user,query_signature}.rollup(sum,3600).as_count()",
+      "scope": "host:billing-prod,db:billing,user:app,query_signature:q-billing",
+      "tag_set": [
+        "host:billing-prod",
+        "db:billing",
+        "user:app",
+        "query_signature:q-billing"
+      ],
+      "interval": 3600000,
+      "aggr": "sum",
+      "pointlist": [
+        [
+          1794268800000,
+          5000000000.0
+        ],
+        [
+          1794272400000,
+          null
+        ]
+      ],
+      "unit": [
+        {
+          "name": "nanosecond"
+        },
+        null
+      ]
+    }
+  ]
+}

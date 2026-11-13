@@ -1,0 +1,20 @@
+[
+  {
+    "title": "Which requests slowed down?",
+    "ask": "Which saved requests became slower between the two review windows?",
+    "command": "node scripts/performance.mjs regression-review",
+    "output": "  host          query_name        previous_ms  mean_ms  change_pct\n  ------------  ----------------  -----------  -------  ----------\n  orders-prod   Order lookup      250.000      750.000  200.0     \n  orders-prod   Catalogue search  1000.000     500.000  -50.0     \n  billing-prod  Billing summary"
+  },
+  {
+    "title": "The latest saved performance",
+    "ask": "Which requests took longest in the latest saved window?",
+    "command": "node scripts/performance.mjs slow-queries",
+    "output": "  host          query_name        mean_ms  executions  missing_points\n  ------------  ----------------  -------  ----------  --------------\n  orders-prod   Order lookup      750.000  400         0             \n  orders-prod   Catalogue search  500.000  40          0             \n  billing-prod  Billing summary            50          1"
+  },
+  {
+    "title": "The work that needs attention",
+    "ask": "Which tuning tasks and record reviews need attention?",
+    "command": "node scripts/performance.mjs attention",
+    "output": "  kind                 record                               owner \n  -------------------  -----------------------------------  ------\n  access-review        Fictional Harbour Software           Morgan\n  incomplete-evidence  Billing summary                            \n  overdue-action       Investigate order lookup regression  Morgan\n  query-owner          Billing summary                            \n  retention-review     Fictional Harbour Software           Morgan"
+  }
+]

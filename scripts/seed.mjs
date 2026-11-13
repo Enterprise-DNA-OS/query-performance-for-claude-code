@@ -1,32 +1,12 @@
-#!/usr/bin/env node
-// Loads the demo data (supabase/seed.sql). Write seed.sql so a second run does nothing:
-// wrap it in a do $$ block that returns early when a known demo row already exists.
-import { readFileSync } from 'node:fs';
+import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { getDb, REPO_ROOT } from './lib/db.mjs';
-
-export async function seed(db) {
-  await db.exec('BEGIN');
-  try {
-    await db.exec(readFileSync(path.join(REPO_ROOT, 'supabase', 'seed.sql'), 'utf8'));
-    await db.exec('COMMIT');
-  } catch (error) {
-    await db.exec('ROLLBACK');
-    throw error;
-  }
+import { getDb,REPO_ROOT } from './lib/db.mjs';
+import { importDatadog } from './lib/import-datadog.mjs';
+export async function seed(db){
+ await db.exec(fs.readFileSync(path.join(REPO_ROOT,'supabase/seed.sql'),'utf8'));
+ for(const part of ['before','after'])await importDatadog(db,{source:'10000000-0000-4000-8000-000000000001',file:path.join(REPO_ROOT,'examples/datadog-'+part+'.json'),expected:3,sourceRef:'Fictional '+part+' export',actor:'Demo seed'});
+ await db.exec(`UPDATE queries SET label=CASE signature WHEN 'q-orders' THEN 'Order lookup' WHEN 'q-search' THEN 'Catalogue search' ELSE 'Billing summary' END,owner=CASE WHEN signature='q-billing' THEN NULL ELSE 'Morgan' END WHERE host_id IN(SELECT id FROM hosts WHERE source_id='10000000-0000-4000-8000-000000000001');
+ INSERT INTO actions(id,query_id,title,owner,due) SELECT '20000000-0000-4000-8000-000000000001',q.id,'Investigate order lookup regression','Morgan','2026-11-01' FROM queries q JOIN hosts h ON h.id=q.host_id WHERE q.signature='q-orders' AND h.source_id='10000000-0000-4000-8000-000000000001' ON CONFLICT DO NOTHING;`);
 }
-
-const isMain = process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
-if (isMain) {
-  const db = await getDb();
-  try {
-    if (db.mode === 'postgres' && !process.argv.includes('--demo-database')) {
-      throw new Error('Shared database seed requires --demo-database. Use only an empty disposable demo database.');
-    }
-    await seed(db);
-    console.log(`seed: demo data ready (${db.mode})`);
-  } finally {
-    await db.close();
-  }
-}
+if(process.argv[1]&&import.meta.url===pathToFileURL(path.resolve(process.argv[1]))){const db=await getDb();try{await seed(db);console.log('Seed: fictional query windows and overdue work ready');}finally{await db.close();}}
